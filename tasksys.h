@@ -2,6 +2,10 @@
 #define _TASKSYS_H
 
 #include "itasksys.h"
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+#include <vector>
 
 /*
  * TaskSystemSerial: This class is the student's implementation of a
@@ -36,6 +40,9 @@ public:
     TaskID runAsyncWithDeps(IRunnable *runnable, int num_total_tasks,
                             const std::vector<TaskID> &deps);
     void sync();
+
+private:
+    int num_threads_;
 };
 
 /*
@@ -54,6 +61,19 @@ public:
     TaskID runAsyncWithDeps(IRunnable *runnable, int num_total_tasks,
                             const std::vector<TaskID> &deps);
     void sync();
+
+private:
+    void workerLoop();
+
+    int num_threads_;
+    std::vector<std::thread> workers_;
+    std::mutex mtx_;
+    IRunnable *current_runnable_;
+    int total_tasks_;
+    int next_task_;
+    int completed_tasks_;
+    bool has_work_;
+    bool shutting_down_;
 };
 
 /*
@@ -72,6 +92,21 @@ public:
     TaskID runAsyncWithDeps(IRunnable *runnable, int num_total_tasks,
                             const std::vector<TaskID> &deps);
     void sync();
+
+private:
+    void workerLoop();
+
+    int num_threads_;
+    std::vector<std::thread> workers_;
+    std::mutex mtx_;
+    std::condition_variable cv_work_;
+    std::condition_variable cv_done_;
+    IRunnable *current_runnable_;
+    int total_tasks_;
+    int next_task_;
+    int completed_tasks_;
+    bool has_work_;
+    bool shutting_down_;
 };
 
 #endif
